@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "streamdoctor"
+version = "0.1.0"
+description = "Video stream diagnostics and root-cause analysis toolkit"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+    {name = "StreamDoctor Contributors"}
+]
+dependencies = [
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.22.0",
+    "requests>=2.0",
+    "httpx>=0.24.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0"
+]
+
+[project.scripts]
+streamdoctor = "streamdoctor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
