@@ -15,6 +15,7 @@ from .analyzers.bitrate import (
     analyze_input_demuxer_evidence,
     analyze_packet_metrics,
 )
+from .probe import sanitize_ffprobe_error
 
 
 # =========================================================
@@ -804,11 +805,22 @@ class StreamAnalyzer:
             raise RuntimeError(
                 "Frame analysis timed out"
             ) from exc
+        except FileNotFoundError as exc:
+
+            raise RuntimeError(
+                "FFprobe is not installed or is not available on PATH"
+            ) from exc
+        except OSError as exc:
+
+            raise RuntimeError(
+                "Unable to start FFprobe"
+            ) from exc
 
         if result.returncode != 0:
 
-            stderr = (
-                result.stderr.strip()
+            stderr = sanitize_ffprobe_error(
+                result.stderr,
+                self.url,
             )
 
             if stderr:
@@ -876,6 +888,16 @@ class StreamAnalyzer:
             raise RuntimeError(
                 "Packet analysis timed out"
             ) from exc
+        except FileNotFoundError as exc:
+
+            raise RuntimeError(
+                "FFprobe is not installed or is not available on PATH"
+            ) from exc
+        except OSError as exc:
+
+            raise RuntimeError(
+                "Unable to start FFprobe"
+            ) from exc
 
         try:
 
@@ -887,7 +909,10 @@ class StreamAnalyzer:
                 "packets": [],
             }
 
-        data["stderr"] = result.stderr
+        data["stderr"] = sanitize_ffprobe_error(
+            result.stderr,
+            self.url,
+        )
         data["returncode"] = result.returncode
 
         return data

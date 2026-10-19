@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 from urllib.parse import urlparse
 
@@ -11,6 +12,17 @@ from .models import (
 
 class ProbeError(Exception):
     """Raised when stream probing fails."""
+
+
+_URL_PATTERN = re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s'\"<>]+", re.IGNORECASE)
+
+
+def sanitize_ffprobe_error(message: str, url: str) -> str:
+    """Remove stream URLs from FFprobe output before presenting an error."""
+    sanitized = (message or "").strip()
+    if url:
+        sanitized = sanitized.replace(url, "<stream URL>")
+    return _URL_PATTERN.sub("<stream URL>", sanitized)
 
 
 def _parse_fps(value: str | None) -> float | None:
@@ -63,9 +75,14 @@ def probe_stream(url: str) -> StreamInfo:
 
     except subprocess.TimeoutExpired as exc:
         raise ProbeError("FFprobe timed out") from exc
+    except FileNotFoundError as exc:
+        raise ProbeError("FFprobe is not installed or is not available on PATH") from exc
+    except OSError as exc:
+        raise ProbeError("Unable to start FFprobe") from exc
 
     if result.returncode != 0:
-        raise ProbeError(result.stderr.strip())
+        message = sanitize_ffprobe_error(result.stderr, url)
+        raise ProbeError(message or "FFprobe stream inspection failed")
 
     try:
         data = json.loads(result.stdout)

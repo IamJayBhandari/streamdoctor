@@ -11,6 +11,18 @@ from .remediation import Remediation
 from .executor import RemediationExecutor, ExecutionResult
 
 
+def _positive_duration(value: str) -> int:
+    try:
+        duration = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("duration must be an integer") from exc
+
+    if duration <= 0:
+        raise argparse.ArgumentTypeError("duration must be greater than zero")
+
+    return duration
+
+
 def main():
 
     parser = argparse.ArgumentParser(
@@ -55,7 +67,7 @@ def main():
 
     analyze_parser.add_argument(
         "--duration",
-        type=int,
+        type=_positive_duration,
         default=30,
         help="Analysis duration in seconds",
     )
@@ -82,7 +94,7 @@ def main():
 
     remediate_parser.add_argument(
         "--duration",
-        type=int,
+        type=_positive_duration,
         default=30,
         help="Analysis duration in seconds",
     )
@@ -941,4 +953,3 @@ if __name__ == "__main__":
         print()
         print("STREAMDOCTOR: Interrupted by user")
         raise SystemExit(130)
-
